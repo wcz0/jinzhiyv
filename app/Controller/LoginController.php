@@ -25,7 +25,7 @@ class LoginController extends Controller
      */
     protected $validationFactory;
 
-    public function login(RequestInterface  $request)
+    public function login(RequestInterface $request)
     {
         $validator = $this->validationFactory->make($request->all(), [
             'phone' => 'required|string',

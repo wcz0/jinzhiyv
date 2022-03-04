@@ -19,13 +19,13 @@ Router::get('/favicon.ico', function () {
 
 Router::post('/login', [\App\Controller\LoginController::class, 'login']);
 
-Router::addGroup(
-    '/api',
-    function(){
-        Router::get('/am', [\App\Controller\IndexController::class, 'am']);
-        Router::get('/pm', [\App\Controller\IndexController::class, 'pm']);
-        Router::get('/sup-buy', [\App\Controller\IndexController::class, 'supBuy']);
-        Router::post('/buy', [\App\Controller\IndexController::class, 'buy']);
-    },
-    ['middleware' => [\App\Middleware\Auth\Check::class]]
-);
+// Router::addGroup(
+//     '/api',
+//     function(){
+//         Router::get('/am', [\App\Controller\IndexController::class, 'am']);
+//         Router::get('/pm', [\App\Controller\IndexController::class, 'pm']);
+//         Router::get('/sup-buy', [\App\Controller\IndexController::class, 'supBuy']);
+//         Router::post('/buy', [\App\Controller\IndexController::class, 'buy']);
+//     },
+//     ['middleware' => [\App\Middleware\Auth\Check::class]]
+// );

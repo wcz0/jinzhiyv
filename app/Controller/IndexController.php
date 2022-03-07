@@ -22,7 +22,6 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 
 class IndexController extends Controller
 {
-
     public function am()
     {
         $client = $this->clientFactory->create();
@@ -42,10 +41,10 @@ class IndexController extends Controller
                 $page_num = $data['data']['data_list']['last_page'];
                 $goods = $data['data']['data_list']['data'];
             } else {
-                return $this->fail('获取商品失败');
+                return $this->fail('获取商品失败1');
             }
         } else {
-            return $this->fail('获取商品失败');
+            return $this->fail('获取商品失败2');
         }
         for ($i = 1; $i <= $page_num; $i++) {
             $client = $this->clientFactory->create();
@@ -62,23 +61,24 @@ class IndexController extends Controller
                 if ($data['code'] == 1) {
                     $goods = array_merge($goods, $data['data']['data_list']['data']);
                 } else {
-                    return $this->fail('获取商品失败');
+                    return $this->fail('获取商品失败3');
                 }
             } else {
-                return $this->fail('获取商品失败');
+                return $this->fail('获取商品失败4');
             }
         }
-        foreach ($goods as $k => $v) {
+        foreach ($goods as $k => &$v) {
             if ($v['is_pub'] == 2) {
                 unset($goods[$k]);
             }
+            $v['price'] = (int)$v['price'];
             if ($v['price'] > 50000) {
                 unset($goods[$k]);
             }
         }
-        $goods = array_multisort(array_column($goods, 'price'), SORT_DESC, $goods);
+        array_multisort(array_column($goods, 'price'), SORT_DESC, SORT_REGULAR, $goods);
         Cache::set('am_max', $this->goodsInfo($goods[0]['id']));
-        Cache::set('goods_am', $goods);
+        Cache::set('am_goods', $goods);
         return $this->success($goods, '获取商品成功');
     }
 
@@ -87,8 +87,8 @@ class IndexController extends Controller
         $client = $this->clientFactory->create();
         $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
             'form_params' => [
-                'page' => '1',
-                'region_id' => '3',
+                'page' => 1,
+                'region_id' => 3,
                 'siv' => $this->siv,
                 'stoken' => $this->stoken,
             ],
@@ -101,10 +101,10 @@ class IndexController extends Controller
                 $page_num = $data['data']['data_list']['last_page'];
                 $goods = $data['data']['data_list']['data'];
             } else {
-                return $this->fail('获取商品失败');
+                return $this->fail('获取商品失败1');
             }
         } else {
-            return $this->fail('获取商品失败');
+            return $this->fail('获取商品失败2');
         }
         for ($i = 1; $i <= $page_num; $i++) {
             $client = $this->clientFactory->create();
@@ -121,20 +121,24 @@ class IndexController extends Controller
                 if ($data['code'] == 1) {
                     $goods = array_merge($goods, $data['data']['data_list']['data']);
                 } else {
-                    return $this->fail('获取商品失败');
+                    return $this->fail('获取商品失败3');
                 }
             } else {
-                return $this->fail('获取商品失败');
+                return $this->fail('获取商品失败4');
             }
         }
         foreach ($goods as $k => $v) {
             if ($v['is_pub'] == 2) {
                 unset($goods[$k]);
             }
+            $v['price'] = (int)$v['price'];
+            if ($v['price'] > 50000) {
+                unset($goods[$k]);
+            }
         }
-        $goods = array_multisort(array_column($goods, 'price'), SORT_DESC, $goods);
+        array_multisort(array_column($goods, 'price'), SORT_DESC, SORT_REGULAR, $goods);
         Cache::set('pm_max', $this->goodsInfo($goods[0]['id']));
-        Cache::set('goods_pm', $goods);
+        Cache::set('pm_goods', $goods);
         return $this->success($goods, '获取商品成功');
     }
 
@@ -194,8 +198,60 @@ class IndexController extends Controller
 
     public function index()
     {
-        $client = $this->clientFactory->create();
-        $response = $client->get('https://www.baidu.com');
-        return (string)$response->getBody();
+        $factory = new HandlerStackFactory();
+        $stack = $factory->create();
+        $client = make(Client::class, [
+            'config' => [
+                'handler' => $stack,
+            ],
+        ]);
+        $login = Cache::get('login');
+        $siv = $login['siv'];
+        $stoken = $login['stoken'];
+        $data = Cache::get('am_buy');
+        if ($data['ceshi_start_time'] >= Carbon::now()->addSeconds(-1)) {
+            $i = 1;
+            do {
+                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                    'form_params' => [
+                        'id' => $data['id'],
+                        'siv' => $siv,
+                        'stoken' => $stoken,
+                    ],
+                ]);
+                if ($response->getStatusCode() == 200) {
+                    $data = json_decode((string)$response->getBody(), true);
+                    if (is_array($data)) {
+                        if ($data['code'] == 1) {
+                            $flag = false;
+                        }
+                        $goods = Cache::get('am_goods');
+                        foreach ($goods as $v) {
+                            $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                                'form_params' => [
+                                    'id' => $v['id'],
+                                    'siv' => $siv,
+                                    'stoken' => $stoken,
+                                ],
+                            ]);
+                            if ($response->getStatusCode() == 200) {
+                                if (is_array($data)) {
+                                    if ($data['code'] == 1) {
+                                        $flag = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($i >= 5) {
+                    $flag = false;
+                }
+                $i++;
+            } while ($flag);
+            // Cache::delete('am_buy');
+        }
     }
+
+
 }

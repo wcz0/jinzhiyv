@@ -4,25 +4,16 @@ namespace App\Task;
 
 use App\Utils\Cache;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
 use Hyperf\Di\Annotation\Inject;
-use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Guzzle\HandlerStackFactory;
 
 /**
- * @Crontab(name="Buy", rule="* * * * * *", callback="execute", memo="这是一个示例的定时任务")
+ * @Crontab(name="Pm", rule="* * * * * *", memo="这是下午的定时任务", callback="execute", enable="isEnable", singleton=false)
  */
 class Pm
 {
-    public $client;
-
-    public $url = 'https://jzy.bjyush.com';
-
-    protected $siv;
-    protected $stoken;
-
-    public function __construct()
+    public function execute()
     {
         $factory = new HandlerStackFactory();
         $stack = $factory->create();
@@ -32,39 +23,59 @@ class Pm
             ],
         ]);
         $login = Cache::get('login');
-        $this->client = $client;
-        $this->siv = $login['siv'];
-        $this->stoken = $login['stoken'];
-    }
-    /**
-     * @Inject()
-     * @var \Hyperf\Contract\StdoutLoggerInterface
-     */
-    public function execute()
-    {
-        if (Cache::has('pm_buy')) {
-            return false;
-        }
-        $pm = Cache::get('pm_buy');
-        if($pm['ceshi_start_time'] >= Carbon::now()->addSeconds(-1)){
+        $siv = $login['siv'];
+        $stoken = $login['stoken'];
+        $data = Cache::get('am_buy');
+        if ($data['ceshi_start_time'] <= Carbon::now()->addSeconds(-1)) {
+            $i = 1;
             do {
-                $response = $this->client->post($this->url . '/wechat.php/Show/productbuy', [
+                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
                     'form_params' => [
-                        'id' => $pm['id'],
-                        'siv' => $this->siv,
-                        'stoken' => $this->stoken,
+                        'id' => $data['id'],
+                        'siv' => $siv,
+                        'stoken' => $stoken,
                     ],
                 ]);
                 if ($response->getStatusCode() == 200) {
                     $data = json_decode((string)$response->getBody(), true);
-                    if ($data['code'] == 1) {
-                        $flag = false;
+                    if (is_array($data)) {
+                        if ($data['code'] == 1) {
+                            $flag = false;
+                        }
+                        $goods = Cache::get('am_goods');
+                        foreach ($goods as $v) {
+                            $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                                'form_params' => [
+                                    'id' => $v['id'],
+                                    'siv' => $siv,
+                                    'stoken' => $stoken,
+                                ],
+                            ]);
+                            if ($response->getStatusCode() == 200) {
+                                if (is_array($data)) {
+                                    if ($data['code'] == 1) {
+                                        $flag = false;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+                if ($i >= 10) {
+                    $flag = false;
+                }
+                $i++;
             } while ($flag);
-            
+            Cache::delete('am_buy');
         }
-        Cache::delete('pm_buy');
-        return true;
     }
+
+    public function isEnable(): bool
+    {
+        if (Cache::has('pm_buy')) {
+            return true;
+        }
+        return false;
+    }
+
 }

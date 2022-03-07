@@ -23,7 +23,7 @@ class LoginController extends Controller
      * @Inject()
      * @var ValidatorFactoryInterface
      */
-    protected $validationFactory;
+    public $validationFactory;
 
     public function login(RequestInterface $request)
     {

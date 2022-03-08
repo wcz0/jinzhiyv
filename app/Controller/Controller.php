@@ -50,5 +50,6 @@ class Controller extends AbstractController
             $this->siv = $login['siv'];
             $this->stoken = $login['stoken'];
         }
+        
     }
 }

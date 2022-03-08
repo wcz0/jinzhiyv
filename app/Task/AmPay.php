@@ -9,9 +9,9 @@ use Hyperf\Di\Annotation\Inject;
 use Hyperf\Guzzle\HandlerStackFactory;
 
 /**
- * @Crontab(name="Am", rule="* * * * * *", memo="这是上午的定时任务", callback="execute", singleton=false, enable="isEnable")
+ * @Crontab(name="AmPay", rule="* * * * * *", memo="这是上午的定时任务", callback="execute", singleton=false, enable="isEnable")
  */
-class Am
+class AmPay
 {
     public function execute()
     {
@@ -25,15 +25,19 @@ class Am
         $login = Cache::get('login');
         $siv = $login['siv'];
         $stoken = $login['stoken'];
+        $address_id = $login['address_id'];
         $data = Cache::get('am_buy');
-        if ($data['ceshi_start_time'] <= Carbon::now()) {
+        if ($data['ceshi_start_time'] <= Carbon::now()->addMinutes(1)) {
             $i = 1;
             do {
-                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
                     'form_params' => [
                         'id' => $data['id'],
                         'siv' => $siv,
                         'stoken' => $stoken,
+                        'pay_way' => 1,
+                        'address_id' => $address_id,
+                        'coupon_id' => '',
                     ],
                 ]);
                 if ($response->getStatusCode() == 200) {
@@ -44,17 +48,21 @@ class Am
                         }
                         $goods = Cache::get('am_goods');
                         foreach ($goods as $v) {
-                            $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                            $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
                                 'form_params' => [
                                     'id' => $v['id'],
                                     'siv' => $siv,
                                     'stoken' => $stoken,
+                                    'pay_way' => 1,
+                                    'address_id' => $address_id,
+                                    'coupon_id' => '',
                                 ],
                             ]);
                             if ($response->getStatusCode() == 200) {
                                 if (is_array($data)) {
                                     if ($data['code'] == 1) {
                                         $flag = false;
+                                        break;
                                     }
                                 }
                             }
@@ -79,5 +87,4 @@ class Am
         }
         return false;
     }
-
 }

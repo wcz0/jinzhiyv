@@ -42,11 +42,23 @@ class LoginController extends Controller
             ],
         ]);
 
+
         if ($response->getStatusCode() == 200) {
             $data = json_decode((string)$response->getBody(), true);
             if ($data['code'] == 1) {
-                Cache::set('login', $data['data']);
-                return $this->success($data['data'], $data['message']);
+                $data = $data['data'];
+                $response = $client->request('POST', $this->url . '/wechat.php/Address/getMyAddress', [
+                    'form_params' => [
+                        'siv' => $data['siv'],
+                        'stoken' => $data['stoken'],
+                    ],
+                ]);
+                $address = json_decode((string)$response->getBody(), true);
+                if ($address['code'] == 1) {
+                    $data['address_id'] = $address['data'][0]['id'];
+                    Cache::set('login', $data['data']);
+                    return $this->success($data['data'], $data['message']);
+                }
             } else {
                 return $this->fail($data['message']);
             }

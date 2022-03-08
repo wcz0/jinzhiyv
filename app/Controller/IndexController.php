@@ -19,6 +19,9 @@ use GuzzleHttp\HandlerStack;
 use Hyperf\Guzzle\ClientFactory;
 use Hyperf\Guzzle\HandlerStackFactory;
 use Hyperf\HttpServer\Contract\RequestInterface;
+use Hyperf\Validation\Contract\ValidatorFactoryInterface;
+use Hyperf\Di\Annotation\Inject;
+
 
 class IndexController extends Controller
 {
@@ -75,6 +78,9 @@ class IndexController extends Controller
             if ($v['price'] > 50000) {
                 unset($goods[$k]);
             }
+        }
+        if (!count($goods)) {
+            return $this->fail('商品列表为空');
         }
         array_multisort(array_column($goods, 'price'), SORT_DESC, SORT_REGULAR, $goods);
         Cache::set('am_max', $this->goodsInfo($goods[0]['id']));
@@ -136,6 +142,9 @@ class IndexController extends Controller
                 unset($goods[$k]);
             }
         }
+        if (!count($goods)) {
+            return $this->fail('商品列表为空');
+        }
         array_multisort(array_column($goods, 'price'), SORT_DESC, SORT_REGULAR, $goods);
         Cache::set('pm_max', $this->goodsInfo($goods[0]['id']));
         Cache::set('pm_goods', $goods);
@@ -157,6 +166,12 @@ class IndexController extends Controller
         return $this->success([], '一键抢购成功, 期间请勿登录账号. 程序自动抢购中');
     }
 
+    /**
+     * @Inject()
+     * @var ValidatorFactoryInterface
+     */
+    protected $validationFactory;
+
     public function buy(RequestInterface $request)
     {
         $validator = $this->validationFactory->make($request->all(), [
@@ -174,7 +189,7 @@ class IndexController extends Controller
         return $this->success([], '抢购特定商品成功, 期间请勿登录账号. 程序自动抢购中');
     }
 
-    public function goodsInfo(int $id)
+    public function goodsInfo($id)
     {
         $client = $this->clientFactory->create();
         $response = $client->request('POST', $this->url . '/wechat.php/Show/productdetails', [
@@ -208,8 +223,9 @@ class IndexController extends Controller
         $login = Cache::get('login');
         $siv = $login['siv'];
         $stoken = $login['stoken'];
-        $data = Cache::get('am_buy');
-        if ($data['ceshi_start_time'] >= Carbon::now()->addSeconds(-1)) {
+        return $login['address_id'];
+        $data = Cache::get('pm_buy');
+        if ($data['ceshi_start_time'] <= Carbon::now()->addSeconds(-1)) {
             $i = 1;
             do {
                 $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
@@ -222,10 +238,11 @@ class IndexController extends Controller
                 if ($response->getStatusCode() == 200) {
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
+                        return $data;
                         if ($data['code'] == 1) {
                             $flag = false;
                         }
-                        $goods = Cache::get('am_goods');
+                        $goods = Cache::get('pm_goods');
                         foreach ($goods as $v) {
                             $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
                                 'form_params' => [
@@ -249,9 +266,8 @@ class IndexController extends Controller
                 }
                 $i++;
             } while ($flag);
-            // Cache::delete('am_buy');
+            return true;
         }
+        return false;
     }
-
-
 }

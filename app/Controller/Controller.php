@@ -13,8 +13,6 @@ class Controller extends AbstractController
 {
     public $url = 'https://jzy.bjyush.com';
 
-    
-
     public function fail($msg)
     {
         return [
@@ -37,19 +35,11 @@ class Controller extends AbstractController
     /**
      * @var \Hyperf\Guzzle\ClientFactory
      */
-    public $clientFactory;
+    protected $client;
 
-    protected $siv;
-    protected $stoken;
-
-    public function __construct(ClientFactory $clientFactory)
+    public function __construct()
     {
-        $this->clientFactory = $clientFactory;
-        if (Cache::has('login')) {
-            $login = Cache::get('login');
-            $this->siv = $login['siv'];
-            $this->stoken = $login['stoken'];
-        }
-        
+        $cf = new ClientFactory($this->container);
+        $this->client = $cf->create();        
     }
 }

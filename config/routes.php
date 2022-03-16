@@ -18,6 +18,8 @@ Router::get('/favicon.ico', function () {
 });
 
 Router::post('/login', [\App\Controller\LoginController::class, 'login']);
+Router::post('/token-login', [\App\Controller\LoginController::class, 'tokenLogin']);
+
 
 Router::addGroup(
     '/api',

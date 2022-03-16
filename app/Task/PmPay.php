@@ -2,89 +2,138 @@
 
 namespace App\Task;
 
+use App\Service\MailService;
 use App\Utils\Cache;
 use Carbon\Carbon;
-use Hyperf\Di\Annotation\Inject;
 use Hyperf\Crontab\Annotation\Crontab;
+use Hyperf\Di\Annotation\Inject;
+use Hyperf\Guzzle\ClientFactory;
 use Hyperf\Guzzle\HandlerStackFactory;
+use Hyperf\Logger\LoggerFactory;
 
-/**
- * @Crontab(name="PmPay", rule="* * * * * *", memo="这是下午的定时任务", callback="execute", enable="isEnable", singleton=false)
- */
 class PmPay
 {
-    public function execute()
+    /**
+     * @Inject
+     * @var MailService
+     */
+    protected $service;
+    protected $client;
+    protected $log;
+    protected $max;
+    protected $siv;
+    protected $stoken;
+    protected $address_id;
+
+    public function __construct(ClientFactory $clientFactory, LoggerFactory $loggerFactory)
     {
-        $factory = new HandlerStackFactory();
-        $stack = $factory->create();
-        $client = make(Client::class, [
-            'config' => [
-                'handler' => $stack,
-            ],
-        ]);
+        $this->client = $clientFactory->create();
+        $this->log = $loggerFactory->get('log', 'pm');
+        $this->max = Cache::get('day_max');
         $login = Cache::get('login');
-        $siv = $login['siv'];
-        $stoken = $login['stoken'];
-        $data = Cache::get('pm_buy');
-        if ($data['ceshi_start_time'] <= Carbon::now()) {
-            $i = 1;
-            do {
-                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
+        $this->siv = $login['siv'];
+        $this->stoken = $login['stoken'];
+        $this->address_id = $login['address_id'];
+    }
+
+    /**
+     * @Crontab(name="PmPay", rule="29,59 59 13 * * *", memo="最贵秒杀")
+     */
+    public function pm()
+    {
+        $id = Cache::get('pm_buy')['id'];
+        for ($i = 0; $i < 9; $i++) {
+            $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
+                'form_params' => [
+                    'id' => $id,
+                    'siv' => $this->siv,
+                    'stoken' => $this->stoken,
+                    'pay_way' => 1,
+                    'address_id' => $this->address_id,
+                    'coupon_id' => '',
+                ],
+            ]);
+            if ($response->getStatusCode() == 200) {
+                $this->log->info('pmpay1: ' . $response->getBody());
+                $data = json_decode((string)$response->getBody(), true);
+                if (is_array($data)) {
+                    if ($data['code'] == 1) {
+                        $this->service->push('2673362947@qq.com');
+                        Cache::set('day_max', Cache::get('day_max') - 1);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @Crontab(name="PmPay2", rule="59 59 13 * * *", memo="降序秒杀")
+     */
+    public function pm2()
+    {
+        if (Cache::get('day_max') > 0) {
+            $goods = Cache::get('pm_goods');
+            foreach ($goods as $v) {
+                $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
                     'form_params' => [
-                        'id' => $data['id'],
-                        'siv' => $siv,
-                        'stoken' => $stoken,
-                        'address_id' => 394,
+                        'id' => $v['id'],
+                        'siv' => $this->siv,
+                        'stoken' => $this->stoken,
                         'pay_way' => 1,
+                        'address_id' => $this->address_id,
                         'coupon_id' => '',
                     ],
                 ]);
                 if ($response->getStatusCode() == 200) {
+                    $this->log->info('pmpay2: ' . $response->getBody());
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
-                            $flag = false;
+                            $this->service->push('2673362947@qq.com');
+                            Cache::set('day_max', Cache::get('day_max') - 1);
                         }
                     }
                 }
-                if ($i >= 5) {
-                    $goods = Cache::get('pm_goods');
-                            foreach ($goods as $v) {
-                                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
-                                    'form_params' => [
-                                        'id' => $v['id'],
-                                        'siv' => $siv,
-                                        'stoken' => $stoken,
-                                        'address_id' => 394,
-                                        'pay_way' => 1,
-                                        'coupon_id' => '',
-                                    ],
-                                ]);
-                                if ($response->getStatusCode() == 200) {
-                                    $good_data = json_decode((string)$response->getBody(), true);
-                                    if (is_array($good_data)) {
-                                        if ($good_data['code'] == 1) {
-                                            $flag = false;
-                                        }
-                                    }
-                                }
-                            }
-                    $flag = false;
+                if (Cache::get('day_max') <= 0) {
+                    break;
                 }
-                $i++;
-            } while ($flag);
-            Cache::delete('pm_buy');
-            return true;
+            }
         }
-        return false;
     }
 
-    public function isEnable(): bool
+    /**
+     * @Crontab(name="PmPay3", rule="* 0 14 * * *", memo="降序循环秒杀", single=false)
+     */
+    public function pm3()
     {
-        if (Cache::has('pm_buy')) {
-            return true;
+        if (Cache::get('day_max') > 0) {
+            $goods = Cache::get('pm_goods');
+            foreach ($goods as $v) {
+                $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
+                    'form_params' => [
+                        'id' => $v['id'],
+                        'siv' => $this->siv,
+                        'stoken' => $this->stoken,
+                        'pay_way' => 1,
+                        'address_id' => $this->address_id,
+                        'coupon_id' => '',
+                    ],
+                ]);
+                if ($response->getStatusCode() == 200) {
+                    $this->log->info('pmpay2: ' . $response->getBody());
+                    $data = json_decode((string)$response->getBody(), true);
+                    if (is_array($data)) {
+                        if ($data['code'] == 1) {
+                            $this->service->push('2673362947@qq.com');
+                            Cache::set('day_max', Cache::get('day_max') - 1);
+                        }
+                    }
+                }
+                if (Cache::get('day_max') <= 0) {
+                    break;
+                }
+            }
         }
-        return false;
     }
-
 }

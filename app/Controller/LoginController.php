@@ -34,20 +34,17 @@ class LoginController extends Controller
         if ($validator->fails()) {
             return $this->fail($validator->errors()->all());
         }
-        $client = $this->clientFactory->create();
-        $response = $client->request('POST', $this->url . '/wechat.php/Vip/mobileLoginNew', [
+        $response = $this->client->post($this->url . '/wechat.php/Vip/mobileLoginNew', [
             'form_params' => [
                 'mobile_phone' => $request->input('phone'),
                 'password' => $request->input('password'),
             ],
         ]);
-
-
         if ($response->getStatusCode() == 200) {
             $data = json_decode((string)$response->getBody(), true);
             if ($data['code'] == 1) {
                 $data = $data['data'];
-                $response = $client->request('POST', $this->url . '/wechat.php/Address/getMyAddress', [
+                $response = $this->client->post($this->url . '/wechat.php/Address/getMyAddress', [
                     'form_params' => [
                         'siv' => $data['siv'],
                         'stoken' => $data['stoken'],
@@ -56,8 +53,8 @@ class LoginController extends Controller
                 $address = json_decode((string)$response->getBody(), true);
                 if ($address['code'] == 1) {
                     $data['address_id'] = $address['data'][0]['id'];
-                    Cache::set('login', $data['data']);
-                    return $this->success($data['data'], $data['message']);
+                    Cache::set('login', $data);
+                    return $this->success($data, '成功登录');
                 }
             } else {
                 return $this->fail($data['message']);
@@ -65,5 +62,23 @@ class LoginController extends Controller
         } else {
             return $this->fail('登录失败');
         }
+    }
+
+    public function tokenLogin(RequestInterface $request)
+    {
+        $validator = $this->validationFactory->make($request->all(), [
+            'siv' => 'required|string',
+            'stoken' => 'required|string',
+            'address_id' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return $this->fail($validator->errors()->all());
+        }
+        $login = Cache::get('login');
+        $login['siv'] = $request->input('siv');
+        $login['stoken'] = $request->input('stoken');
+        $login['address_id'] = $request->input('address_id');
+        Cache::set('login', $login);
+        return $this->success([], '成功登录');
     }
 }

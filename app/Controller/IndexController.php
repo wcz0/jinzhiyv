@@ -15,8 +15,7 @@ namespace App\Controller;
 use App\Utils\Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\HandlerStack;
-use Hyperf\Guzzle\ClientFactory;
+
 use Hyperf\Guzzle\HandlerStackFactory;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
@@ -25,10 +24,22 @@ use Hyperf\Di\Annotation\Inject;
 
 class IndexController extends Controller
 {
+    protected $siv;
+    protected $stoken;
+    protected $address_id;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $login = Cache::get('login');
+        $this->siv = $login['siv'];
+        $this->stoken = $login['stoken'];
+        $this->address_id = $login['address_id'];
+    }
+
     public function am()
     {
-        $client = $this->clientFactory->create();
-        $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
+        $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
             'form_params' => [
                 'page' => '1',
                 'region_id' => '2',
@@ -40,6 +51,9 @@ class IndexController extends Controller
         $page_num = 1;
         if ($response->getStatusCode() == 200) {
             $data = json_decode((string)$response->getBody(), true);
+            if (!is_array($data)) {
+                return $this->fail('用户信息已过期, 请重新登录');
+            }
             if ($data['code'] == 1) {
                 $page_num = $data['data']['data_list']['last_page'];
                 $goods = $data['data']['data_list']['data'];
@@ -49,9 +63,9 @@ class IndexController extends Controller
         } else {
             return $this->fail('获取商品失败2');
         }
-        for ($i = 1; $i <= $page_num; $i++) {
-            $client = $this->clientFactory->create();
-            $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
+        for ($i = 2; $i <= $page_num; $i++) {
+            // $client = $this->clientFactory->create();
+            $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
                 'form_params' => [
                     'page' => $i,
                     'region_id' => '2',
@@ -75,9 +89,6 @@ class IndexController extends Controller
                 unset($goods[$k]);
             }
             $v['price'] = (int)$v['price'];
-            if ($v['price'] > 50000) {
-                unset($goods[$k]);
-            }
         }
         if (!count($goods)) {
             return $this->fail('商品列表为空');
@@ -90,8 +101,7 @@ class IndexController extends Controller
 
     public function pm()
     {
-        $client = $this->clientFactory->create();
-        $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
+        $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
             'form_params' => [
                 'page' => 1,
                 'region_id' => 3,
@@ -103,6 +113,9 @@ class IndexController extends Controller
         $page_num = 1;
         if ($response->getStatusCode() == 200) {
             $data = json_decode((string)$response->getBody(), true);
+            if (!is_array($data)) {
+                return $this->fail('用户信息已过期, 请重新登录');
+            }
             if ($data['code'] == 1) {
                 $page_num = $data['data']['data_list']['last_page'];
                 $goods = $data['data']['data_list']['data'];
@@ -112,7 +125,7 @@ class IndexController extends Controller
         } else {
             return $this->fail('获取商品失败2');
         }
-        for ($i = 1; $i <= $page_num; $i++) {
+        for ($i = 2; $i <= $page_num; $i++) {
             $client = $this->clientFactory->create();
             $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
                 'form_params' => [
@@ -138,9 +151,6 @@ class IndexController extends Controller
                 unset($goods[$k]);
             }
             $v['price'] = (int)$v['price'];
-            if ($v['price'] > 50000) {
-                unset($goods[$k]);
-            }
         }
         if (!count($goods)) {
             return $this->fail('商品列表为空');
@@ -191,8 +201,7 @@ class IndexController extends Controller
 
     public function goodsInfo($id)
     {
-        $client = $this->clientFactory->create();
-        $response = $client->request('POST', $this->url . '/wechat.php/Show/productdetails', [
+        $response = $this->client->post($this->url . '/wechat.php/Show/productdetails', [
             'form_params' => [
                 'id' => $id,
                 'siv' => $this->siv,
@@ -213,13 +222,10 @@ class IndexController extends Controller
 
     public function index()
     {
-        $factory = new HandlerStackFactory();
-        $stack = $factory->create();
-        $client = make(Client::class, [
-            'config' => [
-                'handler' => $stack,
-            ],
-        ]);
+        $response = $this->client->get('https://baidu.com/');
+        $response = $this->client->get('https://aliyun.com/');
+
+        return $response->getBody();
         $login = Cache::get('login');
         $siv = $login['siv'];
         $stoken = $login['stoken'];
@@ -228,7 +234,7 @@ class IndexController extends Controller
         if ($data['ceshi_start_time'] <= Carbon::now()->addSeconds(-1)) {
             $i = 1;
             do {
-                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
                     'form_params' => [
                         'id' => $data['id'],
                         'siv' => $siv,
@@ -244,11 +250,11 @@ class IndexController extends Controller
                         }
                         $goods = Cache::get('pm_goods');
                         foreach ($goods as $v) {
-                            $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
+                            $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
                                 'form_params' => [
                                     'id' => $v['id'],
-                                    'siv' => $siv,
-                                    'stoken' => $stoken,
+                                    'siv' => $this->siv,
+                                    'stoken' => $this->stoken,
                                 ],
                             ]);
                             if ($response->getStatusCode() == 200) {

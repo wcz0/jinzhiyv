@@ -20,7 +20,6 @@ class Pick
     protected $service;
     protected $client;
     protected $log;
-    protected $max;
     protected $siv;
     protected $stoken;
     protected $address_id;
@@ -29,7 +28,6 @@ class Pick
     {
         $this->client = $clientFactory->create();
         $this->log = $loggerFactory->get('log', 'test');
-        $this->max = Cache::get('day_max');
         $login = Cache::get('login');
         $this->siv = $login['siv'];
         $this->stoken = $login['stoken'];
@@ -41,7 +39,7 @@ class Pick
      */
     public function amPick()
     {
-        if ($this->max > 0) {
+        if (Cache::get('am_max') > 0) {
             if (date('Y-m-d 10:30:00') <= Carbon::now() && date('Y-m-d 11:45:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [
@@ -119,7 +117,7 @@ class Pick
      */
     public function pmPick()
     {
-        if ($this->max > 0) {
+        if (Cache::get('pm_max') > 0) {
             if (date('Y-m-d 14:00:00') <= Carbon::now() && date('Y-m-d 15:15:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [

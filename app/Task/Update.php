@@ -41,6 +41,7 @@ class Update
      */
     public function day()
     {
-        Cache::set('day_max', 3);
+        Cache::set('am_max', 1);
+        Cache::set('pm_max', 2);
     }
 }

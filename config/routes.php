@@ -12,6 +12,8 @@ declare(strict_types=1);
 use Hyperf\HttpServer\Router\Router;
 
 Router::addRoute(['GET', 'POST', 'HEAD'], '/', [App\Controller\IndexController::class, 'index']);
+Router::addRoute(['GET', 'POST', 'HEAD'], '/test', [App\Controller\IndexController::class, 'test']);
+
 
 Router::get('/favicon.ico', function () {
     return '';
@@ -28,6 +30,7 @@ Router::addGroup(
         Router::get('/pm', [\App\Controller\IndexController::class, 'pm']);
         Router::get('/sup-buy', [\App\Controller\IndexController::class, 'supBuy']);
         Router::post('/buy', [\App\Controller\IndexController::class, 'buy']);
+        Router::post('/max', [\App\Controller\IndexController::class, 'max']);
     },
     ['middleware' => [\App\Middleware\Auth\Check::class]]
 );

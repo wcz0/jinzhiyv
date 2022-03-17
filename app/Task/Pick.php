@@ -35,11 +35,11 @@ class Pick
     }
 
     /**
-     * @Crontab(name="amPick", rule="* * 10-11 * * *", callback="execute", memo="这是一个示例的定时任务")
+     * /@Crontab(name="amPick", rule="* * 10-11 * * *", callback="execute", memo="这是一个示例的定时任务")
      */
     public function amPick()
     {
-        if (Cache::get('am_max') > 0) {
+        if (Cache::get('am_num') > 0) {
             if (date('Y-m-d 10:30:00') <= Carbon::now() && date('Y-m-d 11:45:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [
@@ -93,11 +93,11 @@ class Pick
                                                     if (is_array($data)) {
                                                         if ($data['code'] == 1) {
                                                             $this->service->push('2673362947@qq.com');
-                                                            Cache::set('day_max', Cache::get('day_max') - 1);
+                                                            Cache::set('am_num', Cache::get('am_num') - 1);
                                                         }
                                                     }
                                                 }
-                                                if (Cache::get('day_max') <= 0) {
+                                                if (Cache::get('am_num') <= 0) {
                                                     break;
                                                 }
                                             }
@@ -117,7 +117,7 @@ class Pick
      */
     public function pmPick()
     {
-        if (Cache::get('pm_max') > 0) {
+        if (Cache::get('pm_num') > 0) {
             if (date('Y-m-d 14:00:00') <= Carbon::now() && date('Y-m-d 15:15:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [
@@ -171,11 +171,11 @@ class Pick
                                                     if (is_array($data)) {
                                                         if ($data['code'] == 1) {
                                                             $this->service->push('2673362947@qq.com');
-                                                            Cache::set('day_max', Cache::get('day_max') - 1);
+                                                            Cache::set('pm_num', Cache::get('pm_num') - 1);
                                                         }
                                                     }
                                                 }
-                                                if (Cache::get('day_max') <= 0) {
+                                                if (Cache::get('pm_num') <= 0) {
                                                     break;
                                                 }
                                             }

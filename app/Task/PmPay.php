@@ -29,7 +29,7 @@ class PmPay
     {
         $this->client = $clientFactory->create();
         $this->log = $loggerFactory->get('log', 'pm');
-        $this->max = Cache::get('day_max');
+        $this->max = Cache::get('pm_num');
         $login = Cache::get('login');
         $this->siv = $login['siv'];
         $this->stoken = $login['stoken'];
@@ -59,7 +59,7 @@ class PmPay
                 if (is_array($data)) {
                     if ($data['code'] == 1) {
                         $this->service->push('2673362947@qq.com');
-                        Cache::set('day_max', Cache::get('day_max') - 1);
+                        Cache::set('pm_num', Cache::get('pm_num') - 1);
                         break;
                     }
                 }
@@ -72,7 +72,7 @@ class PmPay
      */
     public function pm2()
     {
-        if (Cache::get('day_max') > 0) {
+        if (Cache::get('pm_num') > 0) {
             $goods = Cache::get('pm_goods');
             foreach ($goods as $v) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
@@ -91,11 +91,11 @@ class PmPay
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
                             $this->service->push('2673362947@qq.com');
-                            Cache::set('day_max', Cache::get('day_max') - 1);
+                            Cache::set('pm_num', Cache::get('pm_num') - 1);
                         }
                     }
                 }
-                if (Cache::get('day_max') <= 0) {
+                if (Cache::get('pm_num') <= 0) {
                     break;
                 }
             }
@@ -103,11 +103,11 @@ class PmPay
     }
 
     /**
-     * @Crontab(name="PmPay3", rule="* 0 14 * * *", memo="降序循环秒杀", single=false)
+     * /@Crontab(name="PmPay3", rule="* 0 14 * * *", memo="降序循环秒杀", single=false)
      */
     public function pm3()
     {
-        if (Cache::get('day_max') > 0) {
+        if (Cache::get('pm_num') > 0) {
             $goods = Cache::get('pm_goods');
             foreach ($goods as $v) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
@@ -126,11 +126,11 @@ class PmPay
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
                             $this->service->push('2673362947@qq.com');
-                            Cache::set('day_max', Cache::get('day_max') - 1);
+                            Cache::set('pm_num', Cache::get('pm_num') - 1);
                         }
                     }
                 }
-                if (Cache::get('day_max') <= 0) {
+                if (Cache::get('pm_num') <= 0) {
                     break;
                 }
             }

@@ -15,8 +15,7 @@ class Update
 
     public function __construct()
     {
-        // $this->index = new IndexController();
-
+        $this->index = new IndexController();
     }
     /**
      * @Crontab(name="AmUpdate", rule="0 10 * * *")
@@ -37,11 +36,11 @@ class Update
     }
 
     /**
-     * @Crontab(name="Day", rule="* 0 * * *")
+     * @Crontab(name="Day", rule="0 0 * * *")
      */
     public function day()
     {
-        Cache::set('am_max', 1);
-        Cache::set('pm_max', 2);
+        Cache::set('am_num', 1);
+        Cache::set('pm_num', 2);
     }
 }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\MailService;
 use App\Utils\Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -24,27 +25,19 @@ use Hyperf\Di\Annotation\Inject;
 
 class IndexController extends Controller
 {
-    protected $siv;
-    protected $stoken;
-    protected $address_id;
-
-    public function __construct()
-    {
-        parent::__construct();
-        $login = Cache::get('login');
-        $this->siv = $login['siv'];
-        $this->stoken = $login['stoken'];
-        $this->address_id = $login['address_id'];
-    }
 
     public function am()
     {
+        $login = Cache::get('login');
+        $siv = $login['siv'];
+        $stoken = $login['stoken'];
+        $$address_id = $login['address_id'];
         $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
             'form_params' => [
                 'page' => '1',
                 'region_id' => '2',
-                'siv' => $this->siv,
-                'stoken' => $this->stoken,
+                'siv' => $siv,
+                'stoken' => $stoken,
             ],
         ]);
         $goods = [];
@@ -69,8 +62,8 @@ class IndexController extends Controller
                 'form_params' => [
                     'page' => $i,
                     'region_id' => '2',
-                    'siv' => $this->siv,
-                    'stoken' => $this->stoken,
+                    'siv' => $siv,
+                    'stoken' => $stoken,
                 ],
             ]);
             if ($response->getStatusCode() == 200) {
@@ -101,12 +94,16 @@ class IndexController extends Controller
 
     public function pm()
     {
+        $login = Cache::get('login');
+        $siv = $login['siv'];
+        $stoken = $login['stoken'];
+        $$address_id = $login['address_id'];
         $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
             'form_params' => [
                 'page' => 1,
                 'region_id' => 3,
-                'siv' => $this->siv,
-                'stoken' => $this->stoken,
+                'siv' => $siv,
+                'stoken' => $stoken,
             ],
         ]);
         $goods = [];
@@ -131,8 +128,8 @@ class IndexController extends Controller
                 'form_params' => [
                     'page' => $i,
                     'region_id' => '3',
-                    'siv' => $this->siv,
-                    'stoken' => $this->stoken,
+                    'siv' => $siv,
+                    'stoken' => $stoken,
                 ],
             ]);
             if ($response->getStatusCode() == 200) {
@@ -191,21 +188,42 @@ class IndexController extends Controller
         if ($validator->fails()) {
             return $this->fail($validator->errors()->all());
         }
-        if($request->input('time') == 'am'){
+        if ($request->input('time') == 'am') {
             Cache::set('am_buy', $this->goodsInfo($request->input('id')));
-        }else{
+        } else {
             Cache::set('pm_buy', $this->goodsInfo($request->input('id')));
         }
         return $this->success([], '抢购特定商品成功, 期间请勿登录账号. 程序自动抢购中');
     }
 
+    public function max(RequestInterface $request)
+    {
+        $validator = $this->validationFactory->make($request->all(), [
+            'num' => 'required|integer|max:3',
+            'time' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->fail($validator->errors()->all());
+        }
+        if ($request->input('time') == 'am') {
+            Cache::set('am_num', $request->input('num'));
+        } else {
+            Cache::set('pm_num', $request->input('num'));
+        }
+        return $this->success([], '设置抢购限制成功');
+    }
+
     public function goodsInfo($id)
     {
+        $login = Cache::get('login');
+        $siv = $login['siv'];
+        $stoken = $login['stoken'];
+        $$address_id = $login['address_id'];
         $response = $this->client->post($this->url . '/wechat.php/Show/productdetails', [
             'form_params' => [
                 'id' => $id,
-                'siv' => $this->siv,
-                'stoken' => $this->stoken,
+                'siv' => $siv,
+                'stoken' => $stoken,
             ],
         ]);
         if ($response->getStatusCode() == 200) {
@@ -220,60 +238,25 @@ class IndexController extends Controller
         }
     }
 
+
+    /**
+     * @Inject
+     * @var MailService
+     */
+    protected $service;
+
     public function index()
     {
-        $response = $this->client->get('https://baidu.com/');
-        $response = $this->client->get('https://aliyun.com/');
+        $num = mt_rand(0, 20);
+        return $num;
+    }
+
+    public function test()
+    {
+        // $response =$this->client->get('http://localhost:9051/');
+        $response =$this->client->get('http://127.0.0.1:9501/');
 
         return $response->getBody();
-        $login = Cache::get('login');
-        $siv = $login['siv'];
-        $stoken = $login['stoken'];
-        return $login['address_id'];
-        $data = Cache::get('pm_buy');
-        if ($data['ceshi_start_time'] <= Carbon::now()->addSeconds(-1)) {
-            $i = 1;
-            do {
-                $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
-                    'form_params' => [
-                        'id' => $data['id'],
-                        'siv' => $siv,
-                        'stoken' => $stoken,
-                    ],
-                ]);
-                if ($response->getStatusCode() == 200) {
-                    $data = json_decode((string)$response->getBody(), true);
-                    if (is_array($data)) {
-                        return $data;
-                        if ($data['code'] == 1) {
-                            $flag = false;
-                        }
-                        $goods = Cache::get('pm_goods');
-                        foreach ($goods as $v) {
-                            $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productbuy', [
-                                'form_params' => [
-                                    'id' => $v['id'],
-                                    'siv' => $this->siv,
-                                    'stoken' => $this->stoken,
-                                ],
-                            ]);
-                            if ($response->getStatusCode() == 200) {
-                                if (is_array($data)) {
-                                    if ($data['code'] == 1) {
-                                        $flag = false;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if ($i >= 5) {
-                    $flag = false;
-                }
-                $i++;
-            } while ($flag);
-            return true;
-        }
-        return false;
     }
+
 }

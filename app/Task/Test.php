@@ -31,7 +31,7 @@ class Test
     {
         $this->client = $clientFactory->create();
         $this->log = $loggerFactory->get('log', 'test');
-        $this->max = Cache::get('day_max');
+        $this->max = Cache::get('am_num');
         $login = Cache::get('login');
         $this->siv = $login['siv'];
         $this->stoken = $login['stoken'];
@@ -39,19 +39,40 @@ class Test
     }
 
     /**
-     * @Crontab(name="Test1", rule="5 17 * * *", memo="这是上午的定时任务", singleton=false)
+     * //@Crontab(name="Test1", rule="46 10 * * *", memo="这是上午的定时任务", singleton=false)
      */
     public function am()
     {
-        $this->log->info($this->siv);
+        for ($i = 0; $i < 50; $i++) {
+            $this->log->info($i);
+            if ($i == 10) {
+                break;
+            }
+        }
     }
 
     /**
-     * @Crontab(name="Test2", rule="7 17 * * *", memo="这是上午的定时任务", singleton=false)
+     * /@Crontab(name="Test2", rule="11 12 * * *", memo="这是上午的定时任务", singleton=false)
      */
     public function am2()
     {
-        $this->log->info($this->siv);
-        
+
+        if ($this->max > 0) {
+            $goods = Cache::get('am_goods');
+            for ($i = 0; $i < 100; $i++) {
+                $response = $this->client->get('http://localhost:9501/');
+                if ($response->getStatusCode() == 200) {
+                    $this->log->info('ampay2: ' . $response->getBody());
+                    $data = json_decode((string)$response->getBody(), true);
+                    if ($data == 1) {
+                        $this->log->info($i);
+                        Cache::set('am_num', Cache::get('am_num') - 1);
+                    }
+                }
+                if (Cache::get('am_num') <= 0) {
+                    break;
+                }
+            }
+        }
     }
 }

@@ -10,10 +10,10 @@ class Mail
 {
     protected $mail;
 
-    public function __construcy()
+    public function __construct()
     {
         $config = config('mail');
-        $this->mail = new PHPMailer(true);
+        $this->mail = new PHPMailer();
         $this->mail->isSMTP();
         $this->mail->Host       = $config['host'];
         $this->mail->SMTPAuth   = $config['auth'];
@@ -22,10 +22,10 @@ class Mail
         $this->mail->SMTPSecure = $config['secure'];
         $this->mail->Port       = $config['port'];
         $this->mail->setFrom($config['username'], $config['from']);
-        $this->mail->addAttachment('/var/tmp/file.tar.gz');
-        $this->mail->addAttachment('/tmp/image.jpg', 'new.jpg');
         $this->mail->isHTML(true);
+        $this->mail->CharSet = 'UTF-8';
     }
+
 
     public function send($email, $title, $content)
     {

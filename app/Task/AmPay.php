@@ -24,14 +24,12 @@ class AmPay
     protected $siv;
     protected $stoken;
     protected $address_id;
-    protected $cf;
 
     public function __construct(ClientFactory $clientFactory, LoggerFactory $loggerFactory)
     {
         $this->client = $clientFactory->create();
-        $this->cf = $clientFactory;
         $this->log = $loggerFactory->get('log', 'am');
-        $this->max = Cache::get('am_max');
+        $this->max = Cache::get('am_num');
         $login = Cache::get('login');
         $this->siv = $login['siv'];
         $this->stoken = $login['stoken'];
@@ -44,7 +42,7 @@ class AmPay
     public function am()
     {
         $id = Cache::get('am_buy')['id'];
-        for ($i = 0; $i < 9; $i++) {
+        for ($i = 0; $i < 7; $i++) {
             $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
                 'form_params' => [
                     'id' => $id,
@@ -61,7 +59,7 @@ class AmPay
                 if (is_array($data)) {
                     if ($data['code'] == 1) {
                         $this->service->push('2673362947@qq.com');
-                        Cache::set('am_max', Cache::get('am_max') - 1);
+                        Cache::set('am_num', Cache::get('am_num') - 1);
                         break;
                     }
                 }
@@ -70,45 +68,9 @@ class AmPay
     }
 
     /**
-     * @Crontab(name="AmPay2", rule="59 43 2 * * *", memo="降序秒杀")
+     * @Crontab(name="AmPay2", rule="59 29 10 * * *", memo="降序秒杀")
      */
     public function am2()
-    {
-        $client = $this->cf->create();
-        if ($this->max > 0) {
-            $goods = Cache::get('am_goods');
-            foreach ($goods as $v) {
-                $response = $client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
-                    'form_params' => [
-                        'id' => $v['id'],
-                        'siv' => $this->siv,
-                        'stoken' => $this->stoken,
-                        'pay_way' => 1,
-                        'address_id' => $this->address_id,
-                        'coupon_id' => '',
-                    ],
-                ]);
-                if ($response->getStatusCode() == 200) {
-                    $this->log->info('ampay2: ' . $response->getBody());
-                    $data = json_decode((string)$response->getBody(), true);
-                    if (is_array($data)) {
-                        if ($data['code'] == 1) {
-                            $this->service->push('2673362947@qq.com');
-                            Cache::set('am_max', Cache::get('am_max') - 1);
-                        }
-                    }
-                }
-                if (Cache::get('am_max') <= 0) {
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * @Crontab(name="AmPay3", rule="* 29 10 * * *", memo="降序循环秒杀", single=false)
-     */
-    public function am3()
     {
         if ($this->max > 0) {
             $goods = Cache::get('am_goods');
@@ -129,11 +91,46 @@ class AmPay
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
                             $this->service->push('2673362947@qq.com');
-                            Cache::set('am_max', Cache::get('am_max') - 1);
+                            Cache::set('am_num', Cache::get('am_num') - 1);
                         }
                     }
                 }
-                if (Cache::get('am_max') <= 0) {
+                if (Cache::get('am_num') <= 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * /@Crontab(name="AmPay3", rule="* 30 10 * * *", memo="降序循环秒杀", single=false)
+     */
+    public function am3()
+    {
+        if ($this->max > 0) {
+            $goods = Cache::get('am_goods');
+            foreach ($goods as $v) {
+                $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/subpaymoney', [
+                    'form_params' => [
+                        'id' => $v['id'],
+                        'siv' => $this->siv,
+                        'stoken' => $this->stoken,
+                        'pay_way' => 1,
+                        'address_id' => $this->address_id,
+                        'coupon_id' => '',
+                    ],
+                ]);
+                if ($response->getStatusCode() == 200) {
+                    $this->log->info('ampay3: ' . $response->getBody());
+                    $data = json_decode((string)$response->getBody(), true);
+                    if (is_array($data)) {
+                        if ($data['code'] == 1) {
+                            $this->service->push('2673362947@qq.com');
+                            Cache::set('am_num', Cache::get('am_num') - 1);
+                        }
+                    }
+                }
+                if (Cache::get('am_num') <= 0) {
                     break;
                 }
             }

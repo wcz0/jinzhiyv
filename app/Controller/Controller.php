@@ -32,14 +32,11 @@ class Controller extends AbstractController
         ];
     }
 
-    /**
-     * @var \Hyperf\Guzzle\ClientFactory
-     */
     protected $client;
 
     public function __construct()
     {
         $cf = new ClientFactory($this->container);
-        $this->client = $cf->create();        
+        $this->client = $cf->create();
     }
 }

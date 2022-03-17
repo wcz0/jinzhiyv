@@ -62,6 +62,8 @@ class PmPay
                         Cache::set('pm_num', Cache::get('pm_num') - 1);
                         break;
                     }
+                }else{
+                    break;
                 }
             }
         }
@@ -93,6 +95,8 @@ class PmPay
                             $this->service->push('2673362947@qq.com');
                             Cache::set('pm_num', Cache::get('pm_num') - 1);
                         }
+                    }else{
+                        break;
                     }
                 }
                 if (Cache::get('pm_num') <= 0) {
@@ -128,6 +132,8 @@ class PmPay
                             $this->service->push('2673362947@qq.com');
                             Cache::set('pm_num', Cache::get('pm_num') - 1);
                         }
+                    }else{
+                        break;
                     }
                 }
                 if (Cache::get('pm_num') <= 0) {

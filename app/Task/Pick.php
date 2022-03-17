@@ -34,7 +34,7 @@ class Pick
     }
 
     /**
-     * @Crontab(name="AmPick", rule="* * 10 * * *", memo="降序循环秒杀", singleton=false)
+     * @Crontab(name="AmPick", rule="* * 10-11 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function amPick()
     {
@@ -112,7 +112,7 @@ class Pick
     }
 
     /**
-     * @Crontab(name="PmPick", rule="* * 14 * * *", memo="降序循环秒杀", singleton=false)
+     * @Crontab(name="PmPick", rule="* * 14-15 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function pmPick()
     {

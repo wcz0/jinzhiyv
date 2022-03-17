@@ -62,6 +62,8 @@ class AmPay
                         Cache::set('am_num', Cache::get('am_num') - 1);
                         break;
                     }
+                }else{
+                    break;
                 }
             }
         }
@@ -93,6 +95,8 @@ class AmPay
                             $this->service->push('2673362947@qq.com');
                             Cache::set('am_num', Cache::get('am_num') - 1);
                         }
+                    }else{
+                        break;
                     }
                 }
                 if (Cache::get('am_num') <= 0) {
@@ -128,6 +132,8 @@ class AmPay
                             $this->service->push('2673362947@qq.com');
                             Cache::set('am_num', Cache::get('am_num') - 1);
                         }
+                    }else{
+                        break;
                     }
                 }
                 if (Cache::get('am_num') <= 0) {

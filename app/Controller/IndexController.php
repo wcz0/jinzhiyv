@@ -57,7 +57,6 @@ class IndexController extends Controller
             return $this->fail('获取商品失败2');
         }
         for ($i = 2; $i <= $page_num; $i++) {
-            // $client = $this->clientFactory->create();
             $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
                 'form_params' => [
                     'page' => $i,
@@ -123,8 +122,7 @@ class IndexController extends Controller
             return $this->fail('获取商品失败2');
         }
         for ($i = 2; $i <= $page_num; $i++) {
-            $client = $this->clientFactory->create();
-            $response = $client->request('POST', $this->url . '/wechat.php/Show/productlist', [
+            $response = $this->client->post($this->url . '/wechat.php/Show/productlist', [
                 'form_params' => [
                     'page' => $i,
                     'region_id' => '3',

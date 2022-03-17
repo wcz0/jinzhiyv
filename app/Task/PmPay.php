@@ -103,7 +103,7 @@ class PmPay
     }
 
     /**
-     * /@Crontab(name="PmPay3", rule="* 0 14 * * *", memo="降序循环秒杀", single=false)
+     * /@Crontab(name="PmPay3", rule="* 0 14 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function pm3()
     {

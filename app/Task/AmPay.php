@@ -103,7 +103,7 @@ class AmPay
     }
 
     /**
-     * /@Crontab(name="AmPay3", rule="* 30 10 * * *", memo="降序循环秒杀", single=false)
+     * /@Crontab(name="AmPay3", rule="* 30 10 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function am3()
     {

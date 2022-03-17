@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace App\Task;
 
@@ -12,7 +12,6 @@ use Hyperf\Logger\LoggerFactory;
 
 class Pick
 {
-
     /**
      * @Inject
      * @var MailService
@@ -35,7 +34,7 @@ class Pick
     }
 
     /**
-     * /@Crontab(name="amPick", rule="* * 10-11 * * *", callback="execute", memo="这是一个示例的定时任务")
+     * @Crontab(name="AmPick", rule="* * 10 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function amPick()
     {
@@ -113,7 +112,7 @@ class Pick
     }
 
     /**
-     * @Crontab(name="pmPick", rule="* * 14-15 * * *", callback="execute", memo="这是一个示例的定时任务")
+     * @Crontab(name="PmPick", rule="* * 14 * * *", memo="降序循环秒杀", singleton=false)
      */
     public function pmPick()
     {

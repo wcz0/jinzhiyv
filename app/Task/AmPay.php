@@ -2,13 +2,12 @@
 
 namespace App\Task;
 
+use App\Service\CacheService;
 use App\Service\MailService;
 use App\Utils\Cache;
-use Carbon\Carbon;
 use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Guzzle\ClientFactory;
-use Hyperf\Guzzle\HandlerStackFactory;
 use Hyperf\Logger\LoggerFactory;
 
 class AmPay
@@ -18,6 +17,11 @@ class AmPay
      * @var MailService
      */
     protected $service;
+    /**
+     * @Inject
+     * @var CacheService
+     */
+    protected $cache_service;
     protected $client;
     protected $log;
     protected $max;
@@ -37,7 +41,7 @@ class AmPay
     }
 
     /**
-     * @Crontab(name="AmPay", rule="29,59 29 10 * * *", memo="最贵秒杀")
+     * /@Crontab(name="AmPay", rule="29,59 29 10 * * *", memo="最贵秒杀")
      */
     public function am()
     {
@@ -58,11 +62,12 @@ class AmPay
                 $data = json_decode((string)$response->getBody(), true);
                 if (is_array($data)) {
                     if ($data['code'] == 1) {
-                        $this->service->push('2673362947@qq.com');
                         Cache::set('am_num', Cache::get('am_num') - 1);
+                        $this->service->push('2673362947@qq.com');
+                        $this->cache_service->push();
                         break;
                     }
-                }else{
+                } else {
                     break;
                 }
             }
@@ -92,10 +97,11 @@ class AmPay
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
-                            $this->service->push('2673362947@qq.com');
                             Cache::set('am_num', Cache::get('am_num') - 1);
+                            $this->service->push('2673362947@qq.com');
+                        $this->cache_service->push();
                         }
-                    }else{
+                    } else {
                         break;
                     }
                 }
@@ -129,10 +135,11 @@ class AmPay
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
-                            $this->service->push('2673362947@qq.com');
                             Cache::set('am_num', Cache::get('am_num') - 1);
+                            $this->service->push('2673362947@qq.com');
+                        $this->cache_service->push();
                         }
-                    }else{
+                    } else {
                         break;
                     }
                 }

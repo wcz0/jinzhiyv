@@ -41,6 +41,7 @@ class Update
     public function day()
     {
         Cache::set('am_num', 1);
-        Cache::set('pm_num', 2);
+        Cache::set('pm_num', 1);
+        Cache::set('max', 3);
     }
 }

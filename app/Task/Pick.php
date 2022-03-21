@@ -2,6 +2,7 @@
 
 namespace App\Task;
 
+use App\Service\CacheService;
 use App\Service\MailService;
 use App\Utils\Cache;
 use Carbon\Carbon;
@@ -26,7 +27,7 @@ class Pick
     public function __construct(ClientFactory $clientFactory, LoggerFactory $loggerFactory)
     {
         $this->client = $clientFactory->create();
-        $this->log = $loggerFactory->get('log', 'test');
+        $this->log = $loggerFactory->get('log', 'pick');
         $login = Cache::get('login');
         $this->siv = $login['siv'];
         $this->stoken = $login['stoken'];
@@ -38,8 +39,8 @@ class Pick
      */
     public function amPick()
     {
-        if (Cache::get('am_num') > 0) {
-            if (date('Y-m-d 10:30:00') <= Carbon::now() && date('Y-m-d 11:45:00') >= Carbon::now()) {
+        if (Cache::get('max') > 0) {
+            if (date('Y-m-d 10:31:00') <= Carbon::now() && date('Y-m-d 11:45:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [
                         'page' => '1',
@@ -91,12 +92,12 @@ class Pick
                                                     $data = json_decode((string)$response->getBody(), true);
                                                     if (is_array($data)) {
                                                         if ($data['code'] == 1) {
+                                                            Cache::set('max', Cache::get('max') - 1);
                                                             $this->service->push('2673362947@qq.com');
-                                                            Cache::set('am_num', Cache::get('am_num') - 1);
                                                         }
                                                     }
                                                 }
-                                                if (Cache::get('am_num') <= 0) {
+                                                if (Cache::get('max') <= 0) {
                                                     break;
                                                 }
                                             }
@@ -116,8 +117,8 @@ class Pick
      */
     public function pmPick()
     {
-        if (Cache::get('pm_num') > 0) {
-            if (date('Y-m-d 14:00:00') <= Carbon::now() && date('Y-m-d 15:15:00') >= Carbon::now()) {
+        if (Cache::get('max') > 0) {
+            if (date('Y-m-d 14:01:00') <= Carbon::now() && date('Y-m-d 15:15:00') >= Carbon::now()) {
                 $response = $this->client->post('https://jzy.bjyush.com/wechat.php/Show/productlist', [
                     'form_params' => [
                         'page' => '1',
@@ -169,12 +170,12 @@ class Pick
                                                     $data = json_decode((string)$response->getBody(), true);
                                                     if (is_array($data)) {
                                                         if ($data['code'] == 1) {
+                                                            Cache::set('max', Cache::get('max') - 1);
                                                             $this->service->push('2673362947@qq.com');
-                                                            Cache::set('pm_num', Cache::get('pm_num') - 1);
                                                         }
                                                     }
                                                 }
-                                                if (Cache::get('pm_num') <= 0) {
+                                                if (Cache::get('max') <= 0) {
                                                     break;
                                                 }
                                             }

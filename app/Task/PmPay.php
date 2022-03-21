@@ -2,13 +2,12 @@
 
 namespace App\Task;
 
+use App\Service\CacheService;
 use App\Service\MailService;
 use App\Utils\Cache;
-use Carbon\Carbon;
 use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Guzzle\ClientFactory;
-use Hyperf\Guzzle\HandlerStackFactory;
 use Hyperf\Logger\LoggerFactory;
 
 class PmPay
@@ -18,6 +17,11 @@ class PmPay
      * @var MailService
      */
     protected $service;
+    /**
+     * @Inject
+     * @var CacheService
+     */
+    protected $cache_service;
     protected $client;
     protected $log;
     protected $max;
@@ -37,7 +41,7 @@ class PmPay
     }
 
     /**
-     * @Crontab(name="PmPay", rule="29,59 59 13 * * *", memo="最贵秒杀")
+     * /@Crontab(name="PmPay", rule="29,59 59 13 * * *", memo="最贵秒杀")
      */
     public function pm()
     {
@@ -58,8 +62,9 @@ class PmPay
                 $data = json_decode((string)$response->getBody(), true);
                 if (is_array($data)) {
                     if ($data['code'] == 1) {
-                        $this->service->push('2673362947@qq.com');
                         Cache::set('pm_num', Cache::get('pm_num') - 1);
+                        $this->service->push('2673362947@qq.com');
+                        $this->cache_service->push();
                         break;
                     }
                 }else{
@@ -92,8 +97,9 @@ class PmPay
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
-                            $this->service->push('2673362947@qq.com');
                             Cache::set('pm_num', Cache::get('pm_num') - 1);
+                            $this->service->push('2673362947@qq.com');
+                            $this->cache_service->push();
                         }
                     }else{
                         break;
@@ -129,8 +135,9 @@ class PmPay
                     $data = json_decode((string)$response->getBody(), true);
                     if (is_array($data)) {
                         if ($data['code'] == 1) {
-                            $this->service->push('2673362947@qq.com');
                             Cache::set('pm_num', Cache::get('pm_num') - 1);
+                            $this->service->push('2673362947@qq.com');
+                            $this->cache_service->push();
                         }
                     }else{
                         break;

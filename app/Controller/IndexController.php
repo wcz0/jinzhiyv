@@ -141,7 +141,7 @@ class IndexController extends Controller
                 return $this->fail('获取商品失败4');
             }
         }
-        foreach ($goods as $k => $v) {
+        foreach ($goods as $k => &$v) {
             if ($v['is_pub'] == 2) {
                 unset($goods[$k]);
             }

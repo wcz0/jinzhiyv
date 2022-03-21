@@ -3,23 +3,21 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-const template
-
 export default new Router({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
     {
       path: '/',
-      componet: ()=> import('@/pages/index.vue')
+      componet: ()=> import('@/pages/Index/Index.vue')
     },
     {
       path: '/login',
-      componet: ()=> import('@/pages/login.vue')
+      componet: ()=> import('@/pages/Login/Index.vue')
     },
     {
       path: '/:pathMatch(.*)',
-      componet: 
+      componet: ()=> import('@/pages/Error/404.vue')
     }
   ]
 })

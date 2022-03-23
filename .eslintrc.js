@@ -7,6 +7,7 @@ module.export = {
     'eslint:recommended',
     'plugin:vue/vue3-recommended',
     'prettier',
+    'prettier/vue',
   ],
   rules: {
   },

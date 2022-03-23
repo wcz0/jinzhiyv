@@ -94,6 +94,7 @@ class Pick
                                                         if ($data['code'] == 1) {
                                                             Cache::set('max', Cache::get('max') - 1);
                                                             $this->service->push('2673362947@qq.com');
+                                                            sleep(2);
                                                         }
                                                     }
                                                 }
@@ -172,6 +173,7 @@ class Pick
                                                         if ($data['code'] == 1) {
                                                             Cache::set('max', Cache::get('max') - 1);
                                                             $this->service->push('2673362947@qq.com');
+                                                            sleep(2);
                                                         }
                                                     }
                                                 }

@@ -79,6 +79,7 @@ class AmPay
      */
     public function am2()
     {
+        usleep(500000);
         if ($this->max > 0) {
             $goods = Cache::get('am_goods');
             foreach ($goods as $v) {

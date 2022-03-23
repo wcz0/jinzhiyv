@@ -79,6 +79,7 @@ class PmPay
      */
     public function pm2()
     {
+        usleep(500000);
         if (Cache::get('pm_num') > 0) {
             $goods = Cache::get('pm_goods');
             foreach ($goods as $v) {

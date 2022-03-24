@@ -14,8 +14,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // '/api': 'http://wcz.one:9501/api',
-      "/api": "http://localhost:9501/api",
+      '/api': {
+        target: 'http://localhost:9501/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      },
     },
   },
   resolve: {

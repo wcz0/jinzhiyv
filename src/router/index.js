@@ -1,4 +1,6 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import store from '@/store'
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,8 +24,8 @@ router.beforeEach((to, from, next) => {
   if (to.path === '/login') {
     next()
   }
-  let siv = localStorage.getItem('siv')
-  let stoken = localStorage.getItem('stoken')
+  let siv = store.state.siv
+  let stoken = store.state.stoken
   if(siv && stoken){
     next()
   }

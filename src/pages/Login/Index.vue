@@ -29,6 +29,8 @@ export default {
         console.log(res)
         if (res.data.code == 1) {
           this.isSuccess = true
+          this.$store.commit('setSiv', res.data.data.siv)
+          this.$store.commit('setStoken', res.data.data.stoken)
           localStorage.setItem('siv', res.data.data.siv)
           localStorage.setItem('stoken', res.data.data.stoken)
           setTimeout(() => {

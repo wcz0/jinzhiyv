@@ -1,10 +1,18 @@
 <template>
-  <p>请登录 phone:</p>
-  <input type="text" v-model="phone" />
-  <p>password:</p>
-  <input type="password" v-model="password" />
-  <br />
-  <button @click="login">登录</button>
+  <a-row type="flex">
+    <a-col :flex="1">
+      <p>请登录 phone:</p>
+      <input type="text" v-model="phone" />
+      <p>password:</p>
+      <input type="password" v-model="password" />
+      <br />
+    </a-col>
+  </a-row>
+  <a-row>
+    <a-col :span="1">
+      <a-button type="primary" @click="login">登录</a-button>
+    </a-col>
+  </a-row>
   <div v-show="isSuccess">
     <h3>返回首页中...</h3>
     <router-link to="/">立刻返回</router-link>

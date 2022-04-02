@@ -12,7 +12,6 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 # TODO
 
-- 登录功能
-  - vuex - 状态设置
 - 商品列表
   - 数据渲染
+- 页面优化
